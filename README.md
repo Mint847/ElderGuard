@@ -34,6 +34,7 @@
 - [Live Web Dashboard](#-live-web-dashboard)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
+- [Troubleshooting](#-troubleshooting)
 - [Prototype Constraints vs. Real-Life Deployment](#-prototype-constraints-vs-real-life-deployment)
 - [Limitations & Future Work](#-limitations--future-work)
 - [Team](#-team)
@@ -408,6 +409,23 @@ Using the **HLKRadarTool** app (Bluetooth, default password `HiLink`), set the d
 3. After the 30 s PIR warm-up, the system is live.
 
 > 🔐 **Change the default Wi-Fi password** in `ElderGuard.ino` (`ap_password`) before deploying anywhere real.
+
+---
+
+## 🩺 Troubleshooting
+
+Open the Arduino **Serial Monitor at 115200 baud**. The firmware logs every state change and sensor problem.
+
+| Symptom | Likely cause & fix |
+|---|---|
+| Serial shows `SSD1306 failed` and nothing happens | The OLED wasn't found on I²C. Check SDA → GPIO 8, SCL → GPIO 9 and address `0x3C`. The firmware stops at boot without it. |
+| A beam shows `[FAIL]` on the OLED / dashboard | That ToF sensor didn't respond at boot. Check its power, I²C wires and XSHUT pin. It is retried every 10 s, and Serial prints `… recovered — back online.` once it works. |
+| Radar card says **OFFLINE** | No radar frame for over 1 s. Check the radar has **5 V** (not 3.3 V), radar TX → GPIO 17, radar RX → GPIO 18. |
+| `[DHT11] Read failed (NaN)` | Check the data wire on GPIO 16 and the 10 kΩ pull-up resistor. |
+| Humidity reads unrealistically high or low | DHT11 units vary a lot. Adjust `DHT_RH_CAL_OFFSET` in `ElderGuard.ino` to match a reference reading. |
+| Stuck on **EMPTY**, PIR never triggers | Wait out the 30 s warm-up, then move through the doorway. PIR sensors detect *movement*, not a still hand. Check GPIO 15 and the PIR's supply voltage. |
+| Dashboard shows **Connection Lost** | Your device left the `ElderGuard` Wi-Fi network or the ESP32 restarted. Reconnect and the banner clears on the next update. |
+| Saving settings shows *flash write error* | The values apply for the current session but weren't saved, so they reset on reboot. Try again; if it persists, re-flash the firmware. |
 
 ---
 
