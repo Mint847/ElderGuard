@@ -28,7 +28,9 @@
 - [The Prototype](#-the-prototype)
 - [Hardware](#-hardware)
 - [Detection Logic](#-detection-logic)
+- [A Fall, Step by Step](#-a-fall-step-by-step)
 - [The LD2410C Radar's Role](#-the-ld2410c-radars-role)
+- [Radar-First: The Real-Life Design](#-radar-first-the-real-life-design)
 - [Live Web Dashboard](#-live-web-dashboard)
 - [Getting Started](#-getting-started)
 - [Prototype Constraints vs. Real-Life Deployment](#-prototype-constraints-vs-real-life-deployment)
@@ -97,6 +99,8 @@ flowchart LR
     E --> O[OLED Display]
     E --> W[Wi-Fi Dashboard<br/>192.168.4.1]
 ```
+
+> 📡 **In a real bathroom, the radar does the heavy lifting.** In our 1:12 model the ToF beams had to lead, because the radar can't tell postures apart inside a 14 cm box. In a full-size installation the roles flip: **the overhead radar carries roughly 90 % of the detection logic**, and the ToF beams, PIR and humidity sensor become supporting, confirming sensors. See [Radar-First: The Real-Life Design](#-radar-first-the-real-life-design).
 
 ---
 
@@ -209,9 +213,58 @@ Testing showed that cheap sensors are noisy, so the firmware is hardened against
 
 ---
 
+## 🎬 A Fall, Step by Step
+
+Here is what the live dashboard showed during a real test in the prototype, from a person standing to a confirmed fall.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**① Standing**
+
+<img src="docs/images/tof-standing.png" alt="Floor plan with beams N1 and W1 blocked">
+
+The figure stands where beams **N1** and **W1** cross. Both turn **red and shorten** to where they hit the body (106 mm and 111 mm, instead of the empty-room ~250 mm and ~300 mm). The PIR shows the entry was detected.
+
+</td>
+<td width="50%" valign="top">
+
+**② The figure falls, and every beam clears**
+
+<img src="docs/images/tof-fallen.png" alt="Floor plan with all four beams clear">
+
+The figure drops below the 7 cm beam height. All four beams return to their full empty-room length, which is the first part of the **fall signature**.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**③ Checking: the confirmation timer runs**
+
+<img src="docs/images/dash-checking.png" alt="System status CHECKING with fall confirmation timer at 0.9 s">
+
+The status switches to **CHECKING** and the fall confirmation bar counts down (0.9 s left here). If any beam is blocked again, or the person walks out of the door, the check is cancelled.
+
+</td>
+<td width="50%" valign="top">
+
+**④ Fall confirmed**
+
+<img src="docs/images/dash-fall.png" alt="System status FALL">
+
+Nothing cancelled the timer, so the system raises **!! FALL !!** on the dashboard and the OLED, and logs the event. It stays in this state until someone stands up and blocks a beam again.
+
+</td>
+</tr>
+</table>
+
+---
+
 ## 📡 The LD2410C Radar's Role
 
-The **HLK-LD2410C** is a small 24 GHz mmWave presence radar. In ElderGuard it does one focused job: **act as the tie-breaker when steam makes the laser beams unreliable.**
+The **HLK-LD2410C** is a small 24 GHz mmWave presence radar. In the prototype it acts as the **tie-breaker when steam makes the laser beams unreliable**. In a real installation it becomes the **main sensor** (see [the next section](#-radar-first-the-real-life-design)).
 
 - ✅ It reports **whether a person is present**, even someone sitting perfectly still, detected from their breathing.
 - 📏 It reports **how far that person is from the radar** and how strong the reflection is.
@@ -225,6 +278,45 @@ person detected  AND  reflection strength ≥ 8 %  AND  distance from radar ≤ 
 ```
 
 The radar is configured once using the **HLKRadarTool** phone app (0.20 m distance gates, per-gate sensitivity and range limit), then streams readings to the ESP32 about 10 times per second. The firmware decodes the radar's data frames directly, without an external library.
+
+**The radar on the live dashboard:**
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/images/radar-standing.png" alt="Radar card showing target at standing height, 22 cm"><br><sub><b>Standing:</b> the target is <b>22 cm</b> from the radar, inside the ≤ 40 cm standing zone (distance shown in green), so the posture card reads <b>Target at Standing Height</b>.</sub></td>
+<td width="50%" valign="top"><img src="docs/images/radar-floor.png" alt="Radar card showing target at floor level, 62 cm"><br><sub><b>On the floor:</b> the target is now <b>62 cm</b> away, beyond the standing zone (distance shown in red), so the card reads <b>Target at Floor Level — possible fall</b>.</sub></td>
+</tr>
+</table>
+
+---
+
+## 🎯 Radar-First: The Real-Life Design
+
+> **In a real home, ElderGuard would be a radar-first system: the overhead mmWave radar carries roughly 90 % of the detection logic, and the other sensors act as supporting, confirming sensors.**
+
+In the 1:12 model, the ToF beams had to be the primary judge. That was purely a consequence of scale: inside a 14 cm tall box, "standing" and "fallen" are only a few centimetres apart, smaller than one 20 cm radar distance gate. In a full-size bathroom those positions are **more than a metre apart**, and the radar becomes by far the most capable sensor in the system.
+
+| Detection task | 📡 Radar (primary) | Supporting sensors |
+|---|---|---|
+| **Is anyone in the room?** | Sees anyone in its cone, moving *or* perfectly still (from breathing) | PIR confirms entries and exits at the door |
+| **What posture are they in?** | Measures torso distance from the ceiling: standing ≈ 1.0 m, sitting ≈ 1.5 m, on the floor ≈ 2.3 m | ToF beams give a second opinion at fixed heights |
+| **Did they fall?** | A fast drop in distance with a burst of movement, then stillness at floor distance | All beams clearing confirms the fall |
+| **Are they still breathing / responsive?** | Detects breathing micro-motion even when the person is motionless | *No other sensor here can do this* |
+| **Is the shower on?** | Unaffected by steam, works the same either way | DHT11 flags shower mode so the laser beams are trusted less |
+
+**Why the radar can take the lead:**
+
+- 🏠 **Whole-room coverage from one point:** a single ceiling unit covers the floor area that would otherwise need many thin laser beams.
+- 🌫️ **Steam-proof:** it works the same with the shower running, which is exactly when falls are most likely.
+- 🫁 **Detects still people:** a person lying unconscious is still detected from their breathing. A PIR would see nothing.
+- 📏 **Clear posture separation:** standing, sitting and lying are separated by metres, not centimetres, so the decision is unambiguous.
+- 🔒 **Fully private:** no image is ever formed.
+
+**Why we would still keep the other sensors:**
+
+- ✅ **Fewer false alarms:** an alert can require two independent sensors to agree (for example radar sees a fall *and* the beams clear).
+- 🚪 **Doorway logic:** the PIR cleanly separates "left the room" from "disappeared from view".
+- 🛟 **Fallback:** if the radar faults or is obstructed, the beams still provide basic fall detection, and the dashboard flags the fault.
 
 ---
 
@@ -313,7 +405,7 @@ Building at 1:12 scale proved the logic, but it introduced problems that **come 
 | **DHT11** | ±5 % accuracy (this unit read ~28 % high and needed a calibration offset). Real shower steam can't be produced on demand inside a cardboard box. | A real hot shower pushes humidity above 90 %, comfortably past the threshold. An SHT31 (±2 %) is a drop-in upgrade. |
 | **Test subject** | A 14 cm figure is lighter, smaller and less reflective than a person, and falls differently. | A real person is exactly what every sensor was designed to detect. |
 
-> 💡 **Same firmware, same logic.** Moving to a real room only changes mounting heights and thresholds, and all of those can be adjusted from the dashboard without re-programming.
+> 💡 **Same hardware, same building blocks.** Moving to a real room means re-tuning mounting heights and thresholds (most of which are already adjustable from the dashboard) and **promoting the radar from tie-breaker to primary sensor**, as described in [Radar-First: The Real-Life Design](#-radar-first-the-real-life-design).
 
 ---
 
