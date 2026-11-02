@@ -422,9 +422,17 @@ Building at 1:12 scale proved the logic, but it introduced problems that **come 
 
 ## 👥 Team
 
-| Member | GitHub |
-|---|---|
-| *Add name* | [@username](https://github.com/username) |
+ElderGuard was built as a team for the **CSE Term One Project**.
+
+<table>
+<tr>
+<td align="center" width="20%"><a href="https://github.com/Mint847"><img src="https://github.com/Mint847.png?size=120" width="100" alt="Seniru Minthaka"><br><b>Seniru Minthaka</b></a><br><sub>@Mint847</sub></td>
+<td align="center" width="20%"><a href="https://github.com/vidushanimsara50-beep"><img src="https://github.com/vidushanimsara50-beep.png?size=120" width="100" alt="Vidusha"><br><b>Vidusha</b></a><br><sub>@vidushanimsara50-beep</sub></td>
+<td align="center" width="20%"><a href="https://github.com/afham-md"><img src="https://github.com/afham-md.png?size=120" width="100" alt="Afham"><br><b>Afham</b></a><br><sub>@afham-md</sub></td>
+<td align="center" width="20%"><a href="https://github.com/umarfahmymw-collab"><img src="https://github.com/umarfahmymw-collab.png?size=120" width="100" alt="Umar Fahmy"><br><b>Umar Fahmy</b></a><br><sub>@umarfahmymw-collab</sub></td>
+<td align="center" width="20%"><a href="https://github.com/sulaimanmohamed3391-dotcom"><img src="https://github.com/sulaimanmohamed3391-dotcom.png?size=120" width="100" alt="Sulaiman"><br><b>Sulaiman</b></a><br><sub>@sulaimanmohamed3391-dotcom</sub></td>
+</tr>
+</table>
 
 ---
 
