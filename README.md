@@ -32,6 +32,7 @@
 - [The LD2410C Radar's Role](#-the-ld2410c-radars-role)
 - [Radar-First: The Real-Life Design](#-radar-first-the-real-life-design)
 - [Live Web Dashboard](#-live-web-dashboard)
+- [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
 - [Prototype Constraints vs. Real-Life Deployment](#-prototype-constraints-vs-real-life-deployment)
 - [Limitations & Future Work](#-limitations--future-work)
@@ -354,6 +355,23 @@ The ESP32 creates its own Wi-Fi network, so **no router, app or internet connect
 | `/api/test_alert` | POST | Trigger a test alert |
 | `/api/shower_override` | POST | Demo: `{"mode":"auto"\|"on"\|"off"}` |
 | `/api/radar_override` | POST | Demo: `{"mode":"auto"\|"standing"\|"floor"}` |
+
+---
+
+## 🗂️ Repository Structure
+
+```
+ElderGuard/
+├── firmware/
+│   └── ElderGuard/
+│       ├── ElderGuard.ino   # Sensor fusion, state machine, web server, OLED
+│       └── index2.h         # Live dashboard (HTML/CSS/JS), served from flash
+├── docs/
+│   └── images/              # Prototype photos and dashboard screenshots
+└── README.md
+```
+
+The whole system is a single Arduino sketch: open `ElderGuard.ino` and the dashboard file `index2.h` loads with it automatically.
 
 ---
 
