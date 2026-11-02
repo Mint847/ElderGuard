@@ -593,6 +593,7 @@ var prevSysState = null;
 var scaleClearN = 250;
 var scaleClearW = 300;
 var radarGateWidthCm = 20;
+var radarStandMaxCm = 40;  // standing-zone limit; overwritten live from /api/status
 
 /* Connection-lost tracking */
 var consecutiveFailures = 0;
@@ -707,10 +708,10 @@ if (!online) { icon.innerText='📡'; label.innerText='Radar Offline'; sub.inner
 if (!presence) { icon.innerText='⚪'; label.innerText='No Target Detected'; sub.innerText='Bathroom empty or below energy threshold'; return; }
 if (standing) {
 box.classList.add('standing');
-icon.innerText='🧍'; label.innerText='Target at Standing Height'; sub.innerText='Torso reflection in Gate 0-1 (28 cm from radar)';
+icon.innerText='🧍'; label.innerText='Target at Standing Height'; sub.innerText='Torso reflection within ' + radarStandMaxCm + ' cm of the radar';
 } else {
 box.classList.add('floor');
-icon.innerText='🔴'; label.innerText='Target at Floor Level'; sub.innerText='Reflection shifted > 28 cm — possible fall';
+icon.innerText='🔴'; label.innerText='Target at Floor Level'; sub.innerText='Reflection beyond ' + radarStandMaxCm + ' cm — possible fall';
 }
 }
 
@@ -801,7 +802,7 @@ updateOverrideUI('rov-', data.radarOverrideMode || 'auto', 'standing', 'floor', 
 
 var distEl = document.getElementById('radar-dist-val');
 distEl.innerText = on ? data.radarDist : '--';
-if (data.radarStandMaxCm !== undefined) document.getElementById('radar-stand-max').innerText = data.radarStandMaxCm;
+if (data.radarStandMaxCm !== undefined) { radarStandMaxCm = data.radarStandMaxCm; document.getElementById('radar-stand-max').innerText = data.radarStandMaxCm; }
 if (on && data.radarDist > 0 && data.radarStandMaxCm !== undefined) {
 distEl.style.color = (data.radarDist <= data.radarStandMaxCm) ? 'var(--accent)' : 'var(--danger)';
 } else {
